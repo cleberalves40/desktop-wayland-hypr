@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import "theme.js" as Theme
 
 Scope {
     PanelWindow {
@@ -9,7 +10,7 @@ Scope {
             right: true
         }
         implicitHeight: 34
-        color: "#1c2528"
+        color: Theme.background
 
         Text {
             anchors {
@@ -17,7 +18,7 @@ Scope {
                 leftMargin: 14
                 verticalCenter: parent.verticalCenter
             }
-            color: "#e8efed"
+            color: Theme.accent
             font.pixelSize: 13
             text: "Hyprland"
         }
@@ -29,7 +30,7 @@ Scope {
                 rightMargin: 14
                 verticalCenter: parent.verticalCenter
             }
-            color: "#e8efed"
+            color: Theme.foreground
             font.pixelSize: 13
             text: Qt.formatDateTime(new Date(), "ddd dd MMM  hh:mm")
 

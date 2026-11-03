@@ -23,6 +23,44 @@ navegador é escolhido. `--widevine` seleciona Chromium e instala `foreign-cdm`:
 sudo sh ./install.sh --user cleber --widevine --dry-run
 ```
 
+`--theme` aplica uma paleta ao Hyprland e à barra Quickshell. Estão disponíveis
+`default`, `nord`, as variantes `catppuccin-mocha`, `catppuccin-frappe`,
+`catppuccin-macchiato` e `catppuccin-latte`, além de `dracula`, `gruvbox-dark`
+e `tokyo-night`. Exemplo:
+
+```sh
+sudo sh ./install.sh --user cleber --theme nord --dry-run
+sudo sh ./install.sh --user cleber --theme catppuccin-mocha
+```
+
+A paleta do Hyprland fica em um arquivo separado. A configuração Quickshell
+personalizada é preservada; se ela não usa as cores padrão do projeto, o tema
+não altera sua aparência. Os temas GTK/Qt dos aplicativos não são modificados.
+Sem `--theme`, a aparência atual é mantida.
+
+## Idioma e teclado
+
+`--locale` define o idioma de login somente para a conta indicada por `--user`,
+usando `~/.login_conf`; a base é recompilada com `cap_mkdb`. O locale precisa
+estar disponível no FreeBSD (`locale -a`). A mudança vale para novos logins e
+não altera o padrão das outras contas.
+
+`--keymap` seleciona o mapa do teclado da console virtual do FreeBSD e grava a
+opção `keymap` em `rc.conf`. Para a sessão gráfica, use as opções XKB do
+Hyprland: `--kb-layout`, `--kb-model`, `--kb-variant` e `--kb-options`. Layouts
+múltiplos e opções separadas por vírgula são aceitos. Por exemplo:
+
+```sh
+sudo sh ./install.sh --user cleber --locale pt_BR.UTF-8 --keymap br \
+	--kb-layout br --kb-model pc105 --kb-variant abnt2 \
+	--kb-options caps:escape,grp:alt_shift_toggle --dry-run
+```
+
+O mapa do console e o layout XKB são configurações independentes. As opções
+Hyprland são gravadas em um arquivo próprio e incluídas na configuração do
+usuário; os demais ajustes existentes são preservados. Sem essas opções, o
+instalador mantém os padrões atuais.
+
 O instalador exige FreeBSD, root para alterações reais e uma conta existente.
 Ele habilita e inicia D-Bus e seatd, adiciona a conta aos grupos `video` e
 `seatd` se esses grupos existirem e ainda não forem membros, e instala os

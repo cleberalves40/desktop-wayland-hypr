@@ -92,4 +92,46 @@ if sh "$INSTALLER" --user smoke --wifi-driver invalid --dry-run >/dev/null 2>&1;
 	exit 1
 fi
 
+output=$(sh "$INSTALLER" --user smoke --locale pt_BR.UTF-8 --keymap br \
+	--kb-layout br --kb-model pc105 --kb-variant abnt2 \
+	--kb-options caps:escape,grp:alt_shift_toggle --dry-run)
+printf '%s\n' "$output" | grep -F 'Login locale: pt_BR.UTF-8' >/dev/null
+printf '%s\n' "$output" | grep -F 'Console keymap: br' >/dev/null
+printf '%s\n' "$output" | grep -F 'Hyprland XKB layout: br' >/dev/null
+printf '%s\n' "$output" | grep -F ' + cap_mkdb -f /home/smoke/.login_conf.db' >/dev/null
+printf '%s\n' "$output" | grep -F ' + sysrc keymap=br' >/dev/null
+printf '%s\n' "$output" | grep -F 'write Hyprland keyboard settings' >/dev/null
+printf '%s\n' "$output" | grep -F 'include managed keyboard settings' >/dev/null
+
+output=$(sh "$INSTALLER" --user smoke --theme nord --dry-run)
+printf '%s\n' "$output" | grep -F 'Desktop theme: nord' >/dev/null
+printf '%s\n' "$output" | grep -F 'write nord desktop theme palette' >/dev/null
+printf '%s\n' "$output" | grep -F 'include desktop theme' >/dev/null
+
+for theme in default catppuccin-mocha catppuccin-frappe catppuccin-macchiato \
+	catppuccin-latte dracula gruvbox-dark tokyo-night; do
+	output=$(sh "$INSTALLER" --user smoke --theme "$theme" --dry-run)
+	printf '%s\n' "$output" | grep -F "Desktop theme: $theme" >/dev/null
+done
+
+if sh "$INSTALLER" --user smoke --theme invalid --dry-run >/dev/null 2>&1; then
+	printf '%s\n' 'Expected an unsupported desktop theme to fail.' >&2
+	exit 1
+fi
+
+if sh "$INSTALLER" --user smoke --locale 'pt_BR.UTF-8;id' --dry-run >/dev/null 2>&1; then
+	printf '%s\n' 'Expected an invalid locale value to fail.' >&2
+	exit 1
+fi
+
+if sh "$INSTALLER" --user smoke --keymap 'br;id' --dry-run >/dev/null 2>&1; then
+	printf '%s\n' 'Expected an invalid console keymap to fail.' >&2
+	exit 1
+fi
+
+if sh "$INSTALLER" --user smoke --kb-options 'caps:escape;id' --dry-run >/dev/null 2>&1; then
+	printf '%s\n' 'Expected invalid Hyprland keyboard options to fail.' >&2
+	exit 1
+fi
+
 printf '%s\n' 'Installer smoke tests passed.'

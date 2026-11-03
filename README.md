@@ -3,7 +3,7 @@
 Bootstrap de uma sessão Wayland para FreeBSD com Hyprland como compositor e
 Quickshell como shell QML. O projeto instala uma base configurável; não altera
 o gerenciador de login existente nem substitui uma configuração de usuário.
-Versão atual: `0.2.0` (SemVer; fonte da versão em `VERSION`).
+Versão atual: `0.2.1` (SemVer; fonte da versão em `VERSION`).
 
 ## Instalação
 

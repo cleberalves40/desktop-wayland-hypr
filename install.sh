@@ -2,10 +2,13 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+VERSION=$(cat "$SCRIPT_DIR/VERSION")
 DRY_RUN=0
 TARGET_USER=${SUDO_USER:-}
 BROWSER=none
 WIDEVINE=0
+GPU=intel
+WIFI=ax210
 
 usage()
 {
@@ -15,8 +18,11 @@ Usage: install.sh --user USER [options]
 Options:
   --user USER          Desktop account to configure
   --browser CHOICE     none, firefox, chromium, or both (default: none)
+	--gpu PROFILE        intel, amd, or nvidia (default: intel)
+	--wifi PROFILE       ax210 or none (default: ax210)
   --widevine           Install Chromium and the FreeBSD foreign-cdm package
   --dry-run            Print planned changes without applying them
+	--version            Show the semantic version
   -h, --help           Show this help
 EOF
 }
@@ -26,6 +32,10 @@ fail()
 	printf 'Error: %s\n' "$*" >&2
 	exit 1
 }
+
+if ! awk -v version="$VERSION" 'BEGIN { exit !(version ~ /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/) }'; then
+	fail "VERSION must contain a semantic version, got: $VERSION"
+fi
 
 run()
 {
@@ -75,6 +85,16 @@ while [ "$#" -gt 0 ]; do
 		BROWSER=$2
 		shift 2
 		;;
+	--gpu)
+		[ "$#" -ge 2 ] || fail '--gpu requires a value'
+		GPU=$2
+		shift 2
+		;;
+	--wifi)
+		[ "$#" -ge 2 ] || fail '--wifi requires a value'
+		WIFI=$2
+		shift 2
+		;;
 	--widevine)
 		WIDEVINE=1
 		shift
@@ -82,6 +102,10 @@ while [ "$#" -gt 0 ]; do
 	--dry-run)
 		DRY_RUN=1
 		shift
+		;;
+	--version)
+		printf 'desktop-wayland-hypr %s\n' "$VERSION"
+		exit 0
 		;;
 	-h|--help)
 		usage
@@ -98,6 +122,14 @@ done
 case $BROWSER in
 none|firefox|chromium|both) ;;
 *) fail "unsupported browser choice: $BROWSER" ;;
+esac
+case $GPU in
+intel|amd|nvidia) ;;
+*) fail "unsupported GPU profile: $GPU" ;;
+esac
+case $WIFI in
+ax210|none) ;;
+*) fail "unsupported Wi-Fi profile: $WIFI" ;;
 esac
 if [ "$WIDEVINE" -eq 1 ] && [ "$BROWSER" != none ] && [ "$BROWSER" != chromium ]; then
 	fail '--widevine requires --browser chromium or no --browser option'
@@ -126,7 +158,15 @@ fi
 
 CORE_PACKAGES='hyprland quickshell seatd dbus hyprlock hypridle hyprpolkitagent xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk pipewire wireplumber alacritty fuzzel mako grim slurp wl-clipboard xdg-utils noto-basic'
 APP_PACKAGES='neovim-qt vscode inkscape gimp thunar libreoffice zathura zathura-pdf-poppler'
-PACKAGES="$CORE_PACKAGES $APP_PACKAGES"
+GPU_PACKAGES='drm-kmod'
+if [ "$GPU" = nvidia ]; then
+	GPU_PACKAGES="$GPU_PACKAGES nvidia-driver nvidia-drm-kmod"
+fi
+WIFI_PACKAGES=
+if [ "$WIFI" = ax210 ]; then
+	WIFI_PACKAGES=wifi-firmware-iwlwifi-kmod
+fi
+PACKAGES="$CORE_PACKAGES $APP_PACKAGES $GPU_PACKAGES $WIFI_PACKAGES"
 
 case $BROWSER in
 firefox) PACKAGES="$PACKAGES firefox" ;;
@@ -139,6 +179,8 @@ fi
 
 printf 'Target user: %s\n' "$TARGET_USER"
 printf 'Browser selection: %s\n' "$BROWSER"
+printf 'GPU profile: %s\n' "$GPU"
+printf 'Wi-Fi profile: %s\n' "$WIFI"
 printf 'Install packages:\n'
 set -f
 set -- $PACKAGES
@@ -197,5 +239,20 @@ if [ "$WIDEVINE" -eq 1 ]; then
 Widevine is best-effort on FreeBSD. Confirm Chromium detects the CDM and test
 playback with each intended streaming service; package installation alone does
 not guarantee codec, resolution, HDCP, or service-policy compatibility.
+EOF
+fi
+
+if [ "$GPU" = nvidia ]; then
+	cat <<'EOF'
+NVIDIA DRM requires hw.nvidiadrm.modeset=1 in /boot/loader.conf before the
+nvidia-drm module loads. Review the package messages and configure this manually.
+EOF
+fi
+
+if [ "$WIFI" = ax210 ]; then
+	cat <<'EOF'
+AX210 firmware is installed. Driver availability and Wi-Fi feature support
+depend on the FreeBSD release; current iwx(4) documentation lists AX210 but
+does not claim 802.11ax operation. Verify the adapter with pciconf and ifconfig.
 EOF
 fi

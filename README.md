@@ -3,6 +3,7 @@
 Bootstrap de uma sessão Wayland para FreeBSD com Hyprland como compositor e
 Quickshell como shell QML. O projeto instala uma base configurável; não altera
 o gerenciador de login existente nem substitui uma configuração de usuário.
+Versão atual: `0.2.0` (SemVer; fonte da versão em `VERSION`).
 
 ## Instalação
 
@@ -12,6 +13,8 @@ Use uma conta FreeBSD já criada e execute a partir do checkout:
 sudo sh ./install.sh --user cleber --browser firefox --dry-run
 sudo sh ./install.sh --user cleber --browser firefox
 ```
+
+Consulte a versão com `sh ./install.sh --version`.
 
 `--browser` aceita `none`, `firefox`, `chromium` ou `both`; por padrão, nenhum
 navegador é escolhido. `--widevine` seleciona Chromium e instala `foreign-cdm`:
@@ -35,6 +38,28 @@ O `install.sh` não habilita automaticamente Ly nem cria uma entrada de login;
 primeiro valide o driver gráfico e a sessão manualmente. Os nomes de pacotes
 seguem a árvore FreeBSD ports, mas disponibilidade pode variar por versão,
 arquitetura e repositório configurado.
+
+## Hardware
+
+O perfil padrão é `--gpu intel` e `--wifi ax210`. `--gpu` aceita `intel`,
+`amd` ou `nvidia`; os perfis Intel/AMD instalam `drm-kmod`, e o perfil NVIDIA
+também instala `nvidia-driver` e `nvidia-drm-kmod`. O metapacote DRM seleciona
+os módulos/firmware conforme a versão do FreeBSD e arquitetura disponíveis nos
+repositórios. Confira as mensagens dos pacotes e reinicie antes de validar
+Hyprland. Para desativar firmware Wi-Fi, use `--wifi none`.
+
+Em placas NVIDIA, `nvidia-drm-kmod` exige `hw.nvidiadrm.modeset=1` em
+`/boot/loader.conf` antes de carregar `nvidia-drm`. O instalador não altera
+configuração de boot; siga as mensagens do pacote e confirme o hardware antes
+de editar esse arquivo.
+
+O perfil AX210 instala `wifi-firmware-iwlwifi-kmod`. O driver vem do sistema
+base e depende da versão do FreeBSD; o pacote de firmware não habilita Wi-Fi por
+si só. As interfaces Ethernet Intel 1GbE normalmente usam drivers do sistema
+base (por exemplo, `em(4)` ou `igc(4)`), sem pacote adicional. Confirme o modelo
+com `pciconf -lv` e a interface com `ifconfig`. AX210 é reconhecida pela
+documentação de `iwx(4)`, mas o suporte a 802.11ax não é garantido no driver
+atual; valide recursos e estabilidade no FreeBSD instalado.
 
 ## Aplicativos e limites
 

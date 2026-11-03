@@ -9,6 +9,8 @@ BROWSER=none
 WIDEVINE=0
 GPU=intel
 WIFI=ax210
+WIFI_DRIVER=auto
+WIFI_DRIVER_EXPLICIT=0
 
 usage()
 {
@@ -19,7 +21,8 @@ Options:
   --user USER          Desktop account to configure
   --browser CHOICE     none, firefox, chromium, or both (default: none)
 	--gpu PROFILE        intel, amd, or nvidia (default: intel)
-	--wifi PROFILE       ax210 or none (default: ax210)
+	--wifi PROFILE       ax210, legacy, or none (default: ax210)
+	--wifi-driver DRIVER auto, iwlwifi, iwx, or iwm (default: auto)
   --widevine           Install Chromium and the FreeBSD foreign-cdm package
   --dry-run            Print planned changes without applying them
 	--version            Show the semantic version
@@ -73,6 +76,26 @@ ensure_group_membership()
 	run pw groupmod "$group_name" -m "$TARGET_USER"
 }
 
+configure_wifi_driver()
+{
+	[ "$WIFI_DRIVER_EXPLICIT" -eq 1 ] || return 0
+
+	case $WIFI_DRIVER in
+	auto)
+		for module in if_iwlwifi if_iwx if_iwm; do
+			run sysrc "devmatch_blocklist-=$module"
+		done
+		;;
+	*)
+		run sysrc "devmatch_blocklist-=if_$WIFI_DRIVER"
+		for module in if_iwlwifi if_iwx if_iwm; do
+			[ "$module" = "if_$WIFI_DRIVER" ] && continue
+			run sysrc "devmatch_blocklist+=$module"
+		done
+		;;
+	esac
+}
+
 while [ "$#" -gt 0 ]; do
 	case $1 in
 	--user)
@@ -93,6 +116,12 @@ while [ "$#" -gt 0 ]; do
 	--wifi)
 		[ "$#" -ge 2 ] || fail '--wifi requires a value'
 		WIFI=$2
+		shift 2
+		;;
+	--wifi-driver)
+		[ "$#" -ge 2 ] || fail '--wifi-driver requires a value'
+		WIFI_DRIVER=$2
+		WIFI_DRIVER_EXPLICIT=1
 		shift 2
 		;;
 	--widevine)
@@ -128,8 +157,17 @@ intel|amd|nvidia) ;;
 *) fail "unsupported GPU profile: $GPU" ;;
 esac
 case $WIFI in
-ax210|none) ;;
+ax210|legacy|none) ;;
 *) fail "unsupported Wi-Fi profile: $WIFI" ;;
+esac
+case $WIFI_DRIVER in
+auto|iwlwifi|iwx|iwm) ;;
+*) fail "unsupported Wi-Fi driver: $WIFI_DRIVER" ;;
+esac
+case $WIFI:$WIFI_DRIVER in
+ax210:iwm|legacy:iwlwifi|legacy:iwx|none:iwlwifi|none:iwx|none:iwm)
+	fail "Wi-Fi driver $WIFI_DRIVER is incompatible with the $WIFI profile"
+	;;
 esac
 if [ "$WIDEVINE" -eq 1 ] && [ "$BROWSER" != none ] && [ "$BROWSER" != chromium ]; then
 	fail '--widevine requires --browser chromium or no --browser option'
@@ -181,6 +219,7 @@ printf 'Target user: %s\n' "$TARGET_USER"
 printf 'Browser selection: %s\n' "$BROWSER"
 printf 'GPU profile: %s\n' "$GPU"
 printf 'Wi-Fi profile: %s\n' "$WIFI"
+printf 'Wi-Fi driver: %s\n' "$WIFI_DRIVER"
 printf 'Install packages:\n'
 set -f
 set -- $PACKAGES
@@ -188,6 +227,7 @@ for package do
 	printf '  %s\n' "$package"
 done
 run pkg install -y "$@"
+configure_wifi_driver
 
 run sysrc dbus_enable=YES
 run sysrc seatd_enable=YES

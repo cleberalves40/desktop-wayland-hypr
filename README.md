@@ -3,7 +3,7 @@
 Bootstrap de uma sessão Wayland para FreeBSD com Hyprland como compositor e
 Quickshell como shell QML. O projeto instala uma base configurável; não altera
 o gerenciador de login existente nem substitui uma configuração de usuário.
-Versão atual: `0.2.1` (SemVer; fonte da versão em `VERSION`).
+Versão atual: `0.3.0` (SemVer; fonte da versão em `VERSION`).
 
 ## Instalação
 
@@ -46,7 +46,8 @@ O perfil padrão é `--gpu intel` e `--wifi ax210`. `--gpu` aceita `intel`,
 também instala `nvidia-driver` e `nvidia-drm-kmod`. O metapacote DRM seleciona
 os módulos/firmware conforme a versão do FreeBSD e arquitetura disponíveis nos
 repositórios. Confira as mensagens dos pacotes e reinicie antes de validar
-Hyprland. Para desativar firmware Wi-Fi, use `--wifi none`.
+Hyprland. `--wifi` aceita `ax210`, `legacy` ou `none`; `legacy` representa os
+adaptadores Intel listados por `iwm(4)`, e não instala firmware AX210.
 
 Em placas NVIDIA, `nvidia-drm-kmod` exige `hw.nvidiadrm.modeset=1` em
 `/boot/loader.conf` antes de carregar `nvidia-drm`. O instalador não altera
@@ -55,11 +56,20 @@ de editar esse arquivo.
 
 O perfil AX210 instala `wifi-firmware-iwlwifi-kmod`. O driver vem do sistema
 base e depende da versão do FreeBSD; o pacote de firmware não habilita Wi-Fi por
-si só. As interfaces Ethernet Intel 1GbE normalmente usam drivers do sistema
-base (por exemplo, `em(4)` ou `igc(4)`), sem pacote adicional. Confirme o modelo
-com `pciconf -lv` e a interface com `ifconfig`. AX210 é reconhecida pela
-documentação de `iwx(4)`, mas o suporte a 802.11ax não é garantido no driver
-atual; valide recursos e estabilidade no FreeBSD instalado.
+si só. `--wifi-driver` aceita `auto`, `iwlwifi`, `iwx` ou `iwm` e, quando
+informado, ajusta `devmatch_blocklist` para preferir o driver escolhido,
+preservando outros módulos já bloqueados. A opção explícita `auto` remove da
+lista os bloqueios desses três drivers. Sem essa opção, o instalador não altera
+a seleção de driver.
+
+Para AX210, use `auto`, `iwx` ou `iwlwifi`; `iwm` não suporta esse adaptador.
+Para adaptadores Intel listados por `iwm(4)`, use `--wifi legacy` com `auto` ou
+`iwm`. O suporte do `iwm(4)` a modos Wi-Fi é limitado e não garante associação a
+redes configuradas apenas para 802.11n/ac. `iwx(4)` lista AX210, mas não oferece
+802.11ax atualmente; confirme recursos e estabilidade no FreeBSD instalado.
+As interfaces Ethernet Intel 1GbE normalmente usam drivers do sistema base
+(por exemplo, `em(4)` ou `igc(4)`), sem pacote adicional. Confirme o modelo com
+`pciconf -lv` e a interface com `ifconfig`.
 
 ## Aplicativos e limites
 

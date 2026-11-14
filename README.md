@@ -111,6 +111,10 @@ As interfaces Ethernet Intel 1GbE normalmente usam drivers do sistema base
 (por exemplo, `em(4)` ou `igc(4)`), sem pacote adicional. Confirme o modelo com
 `pciconf -lv` e a interface com `ifconfig`.
 
+## Podman (preparação para freebsd-podman-apps)
+
+O instalador agora inclui o pacote `podman`, habilita o serviço `linux` (camada de compatibilidade Linux) e o serviço `podman`, e garante a montagem de `fdescfs` em `/dev/fd`. Isso prepara o sistema para o instalador [cleberalves40/freebsd-podman-apps](https://github.com/cleberalves40/freebsd-podman-apps).
+
 ## Aplicativos e limites
 
 A base instala Neovim-Qt, Code - OSS (`vscode` no ports, não o binário oficial

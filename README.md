@@ -113,7 +113,21 @@ As interfaces Ethernet Intel 1GbE normalmente usam drivers do sistema base
 
 ## Podman (preparação para freebsd-podman-apps)
 
-O instalador agora inclui o pacote `podman`, habilita o serviço `linux` (camada de compatibilidade Linux) e o serviço `podman`, e garante a montagem de `fdescfs` em `/dev/fd`. Isso prepara o sistema para o instalador [cleberalves40/freebsd-podman-apps](https://github.com/cleberalves40/freebsd-podman-apps).
+O instalador inclui o pacote `podman` e prepara o ambiente para o
+[cleberalves40/freebsd-podman-apps](https://github.com/cleberalves40/freebsd-podman-apps):
+
+- Habilita e inicia a camada de compatibilidade Linux (`linux_enable=YES`).
+- Habilita o serviço principal do Podman (`podman_enable=YES`) para restart de containers.
+- Habilita o serviço da API (`podman_service_enable=YES`) e o inicia.
+- Garante a montagem de `fdescfs` em `/dev/fd` (necessária para políticas de restart).
+- Habilita o packet filter (`pf_enable=YES`).
+- Exibe uma nota recomendando a configuração de `/etc/pf.conf` a partir do sample
+  `/usr/local/etc/containers/pf.conf.sample` (ajuste as interfaces de egress
+  `v4egress_if` / `v6egress_if` para o networking dos containers funcionar).
+
+Após a instalação, o sistema fica pronto para o instalador de aplicativos Linux
+via Podman. A configuração completa de regras PF e testes de containers devem ser
+validados no FreeBSD alvo.
 
 ## Aplicativos e limites
 

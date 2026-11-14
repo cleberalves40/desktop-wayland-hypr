@@ -64,6 +64,22 @@ The AX210 profile installs `wifi-firmware-iwlwifi-kmod`. The driver is part of t
 
 For AX210, use `auto`, `iwx`, or `iwlwifi`; `iwm` does not support this adapter. For Intel adapters listed by `iwm(4)`, use `--wifi legacy` with `auto` or `iwm`. `iwm(4)` has limited Wi-Fi mode support and does not guarantee association with networks configured for 802.11n/ac only. `iwx(4)` lists AX210 but currently does not claim 802.11ax support; verify features and stability on the installed FreeBSD version. Intel 1GbE Ethernet interfaces usually use base-system drivers (for example, `em(4)` or `igc(4)`) and need no extra package. Identify the model with `pciconf -lv` and the interface with `ifconfig`.
 
+## Podman (preparation for freebsd-podman-apps)
+
+The installer includes the `podman` package and prepares the system for the
+[cleberalves40/freebsd-podman-apps](https://github.com/cleberalves40/freebsd-podman-apps) installer:
+
+- Enables and starts the Linux compatibility layer (`linux_enable=YES`).
+- Enables the main Podman service (`podman_enable=YES`) for container restart policies.
+- Enables and starts the Podman API service (`podman_service_enable=YES`).
+- Ensures `fdescfs` is mounted on `/dev/fd` (required for restart policies).
+- Enables the packet filter (`pf_enable=YES`).
+- Displays a note recommending configuration of `/etc/pf.conf` from the sample
+  `/usr/local/etc/containers/pf.conf.sample` (adjust the egress interfaces
+  `v4egress_if` / `v6egress_if` so container networking works).
+
+After installation the system is ready for the Linux application installer via Podman. Full PF rule configuration and container tests should still be validated on the target FreeBSD system.
+
 ## Applications and limitations
 
 The base installation includes Neovim-Qt, Code - OSS (`vscode` in ports, not the official Microsoft binary), Inkscape, GIMP, Thunar, LibreOffice, and Zathura with the Poppler backend. Firefox and Chromium are optional. Browser selection does not imply compatibility with any particular streaming service.
